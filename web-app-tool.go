@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"web-app-tool/commands"
+	"web-app-tool/src/commands"
 	"github.com/urfave/cli"
 )
 
