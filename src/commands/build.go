@@ -11,10 +11,29 @@ import (
 	"time"
 )
 
+var buildFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "tag,t",
+		Value: time.Now().Format("20060102150405"),
+		Usage: "tag for build",
+	},
+	cli.StringFlag{
+		Name:  "cdn-domain",
+		Value: "//s-cdn.qccost.com",
+		Usage: "cdn domain, no schema",
+	},
+	cli.StringFlag{
+		Name:  "name,n",
+		Usage: "project name",
+	},
+}
+
 var Build = cli.Command{
-	Name:    "build",
-	Aliases: []string{"b"},
-	Usage:   "build web-app",
+	Name:      "build",
+	Aliases:   []string{"b"},
+	Usage:     "build web-app",
+	Flags:     buildFlags,
+	ArgsUsage: "project-path",
 	Action: func(c *cli.Context) error {
 
 		projectPath := c.Args().First()
@@ -27,8 +46,11 @@ var Build = cli.Command{
 
 		packageInfo, _ := utils.ReadPackageInfo(projectPath)
 
-		fmt.Println("app name: ", packageInfo.Name)
-		fmt.Println("app version: ", packageInfo.Version)
+		appName := packageInfo.Name
+
+		if len(c.String("name")) != 0 {
+			appName = c.String("name")
+		}
 
 		npmPath, err := exec.LookPath("npm")
 
@@ -52,12 +74,13 @@ var Build = cli.Command{
 
 		fmt.Println("dependencies installed ...")
 
-		fmt.Println("building web-app ...")
+		fmt.Printf("building %s starts ...", appName)
 
 		buildEnv := make(map[string]string)
 
-		buildEnv["BUILD_TAG"] = time.Now().Format("20060102150405")
-		buildEnv["CDN_PATH"] = "//s-cdn.qccost.com/" + packageInfo.Name
+		buildEnv["BUILD_TAG"] = c.String("tag")
+		buildEnv["CDN_PATH"] = c.String("cdn-domain")
+		buildEnv["APP_NAME"] = appName
 
 		for k, v := range buildEnv {
 			buildSession.SetEnv(k, v)
@@ -66,6 +89,8 @@ var Build = cli.Command{
 		fmt.Println("build env: ", buildEnv)
 
 		buildSession.Command(npmPath, "run", "build").Run()
+
+		fmt.Printf("%s has been built", appName)
 
 		return nil
 	},

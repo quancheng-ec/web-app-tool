@@ -7,8 +7,10 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/urfave/cli"
-	"fmt"
 	"web-app-tool/src/ossService"
+	"strings"
+	"path"
+	"fmt"
 )
 
 var Deploy = cli.Command{
@@ -39,6 +41,8 @@ var Deploy = cli.Command{
 
 		ossService.Init(&config)
 
+		fmt.Println("find files in dist folder: ")
+
 		err := filepath.Walk(distPath, func(filePath string, info os.FileInfo, err error) error {
 
 			if !info.IsDir() && info.Name() != "index.html" {
@@ -47,14 +51,15 @@ var Deploy = cli.Command{
 					return err
 				}
 
-				fmt.Println(filePath)
+				objectPath := strings.Replace(filePath, path.Clean(distPath), "", 1)
 
 				defer f.Close()
-				//uploadErr := ossService.UploadToBucket(objectPath, f)
-				//
-				//if uploadErr != nil {
-				//	return err
-				//}
+
+				uploadErr := ossService.UploadToBucket(objectPath, f)
+
+				if uploadErr != nil {
+					return err
+				}
 			}
 			return nil
 		})
@@ -62,6 +67,10 @@ var Deploy = cli.Command{
 		if err != nil {
 			log.Fatalln("upload failed for: %v", err.Error())
 		}
+
+
+
+		fmt.Println("dist files deployed")
 
 		return nil
 	},

@@ -24,14 +24,14 @@ func Init(c *ServiceConfig) error {
 	Config = c
 	Client = oss.NewOSSClient(c.Region, false, c.AccessKeyId, c.AccessKeySecret, false)
 	Bucket = Client.Bucket(c.Bucket)
-	Client.SetDebug(true)
+	Client.SetDebug(false)
 
 	return nil
 }
 
 func UploadToBucket(path string, f *os.File) error {
-	fmt.Println(path)
-	err := Bucket.PutFile("/test/"+path, f, "public-read", oss.Options{})
+	fmt.Printf("uploading file: %s \n", path)
+	err := Bucket.PutFile(path, f, "public-read", oss.Options{})
 	if err != nil {
 		return err
 	}
