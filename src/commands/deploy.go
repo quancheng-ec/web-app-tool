@@ -13,10 +13,18 @@ import (
 	"fmt"
 )
 
+var deployFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "path,p",
+		Usage: "oss object path",
+	},
+}
+
 var Deploy = cli.Command{
 	Name:    "deploy",
 	Aliases: []string{"d"},
 	Usage:   "deploy built web-app",
+	Flags:   deployFlags,
 	Action: func(c *cli.Context) error {
 
 		var config ossService.ServiceConfig
@@ -53,8 +61,13 @@ var Deploy = cli.Command{
 
 				objectPath := strings.Replace(filePath, path.Clean(distPath), "", 1)
 
-				defer f.Close()
+				if c.String("path") != "" {
+					objectPath = path.Join(c.String("path"), objectPath)
+				}
 
+				defer f.Close()
+				fmt.Println(objectPath)
+				return nil
 				uploadErr := ossService.UploadToBucket(objectPath, f)
 
 				if uploadErr != nil {
@@ -67,8 +80,6 @@ var Deploy = cli.Command{
 		if err != nil {
 			log.Fatalln("upload failed for: %v", err.Error())
 		}
-
-
 
 		fmt.Println("dist files deployed")
 
