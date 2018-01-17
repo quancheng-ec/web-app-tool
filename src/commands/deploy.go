@@ -66,8 +66,7 @@ var Deploy = cli.Command{
 				}
 
 				defer f.Close()
-				fmt.Println(objectPath)
-				return nil
+
 				uploadErr := ossService.UploadToBucket(objectPath, f)
 
 				if uploadErr != nil {
